@@ -1,7 +1,6 @@
 import { App } from "octokit";
 import fs from "fs";
 
-// Uses your exact secret filename mounted by Render
 const privateKeyPath = process.env.RENDER ? "/etc/secrets/appforge-ai-official.2026-07-24.private-key.pem" : "./private-key.pem";
 
 const app = new App({
@@ -31,12 +30,26 @@ jobs:
         run: echo "AppForge AI successfully deployed via Render secret files!"
 `;
 
+    // Check if file already exists to grab its sha
+    let sha;
+    try {
+      const existingFile = await octokit.rest.repos.getContent({
+        owner,
+        repo,
+        path,
+      });
+      sha = existingFile.data.sha;
+    } catch (e) {
+      // File doesn't exist yet, which is fine
+    }
+
     const response = await octokit.rest.repos.createOrUpdateFileContents({
       owner: owner,
       repo: repo,
       path: path,
-      message: "feat: Add build.yml via AppForge AI GitHub App",
+      message: "feat: Add or update build.yml via AppForge AI GitHub App",
       content: Buffer.from(buildYmlContent).toString("base64"),
+      sha: sha, // Includes sha if updating an existing file
     });
 
     console.log(`Success! File created/updated: ${response.data.commit.html_url}`);

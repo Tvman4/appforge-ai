@@ -1,8 +1,8 @@
 import { App } from "octokit";
 import fs from "fs";
 
-// Render mounts secret files to /etc/secrets/private-key.pem
-const privateKeyPath = process.env.RENDER ? "/etc/secrets/private-key.pem" : "./private-key.pem";
+// Uses your exact secret filename mounted by Render
+const privateKeyPath = process.env.RENDER ? "/etc/secrets/appforge-ai-official.2026-07-24.private-key.pem" : "./private-key.pem";
 
 const app = new App({
   appId: process.env.APP_ID,

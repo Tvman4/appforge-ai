@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AppForge AI - Multi-Platform Compiler Hub</title>
+    <title>AppForge AI - Intelligent Compiler Chat</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -16,195 +16,168 @@
         }
         .container {
             width: 100%;
-            max-width: 650px;
+            max-width: 700px;
             background: #1e293b;
-            padding: 30px;
+            padding: 25px;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            height: 85vh;
         }
         h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
+            font-size: 22px;
+            margin-bottom: 5px;
             color: #38bdf8;
         }
         p {
             color: #94a3b8;
-            font-size: 14px;
-            margin-bottom: 20px;
+            font-size: 13px;
+            margin-bottom: 15px;
         }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            font-size: 14px;
+        #chatBox {
+            flex: 1;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 15px;
+            overflow-y: auto;
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
-        input, textarea {
-            width: 100%;
-            padding: 10px 12px;
-            margin-bottom: 20px;
+        .message {
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 14px;
+            max-width: 85%;
+            line-height: 1.4;
+        }
+        .user-msg {
+            background: #0284c7;
+            color: white;
+            align-self: flex-end;
+        }
+        .ai-msg {
+            background: #334155;
+            color: #f8fafc;
+            align-self: flex-start;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        .input-area {
+            display: flex;
+            gap: 10px;
+        }
+        input {
+            flex: 1;
+            padding: 12px;
             background: #0f172a;
             border: 1px solid #334155;
             border-radius: 6px;
             color: #fff;
             font-size: 14px;
-            box-sizing: border-box;
-        }
-        textarea {
-            resize: vertical;
-            height: 220px;
-            font-family: monospace;
-            font-size: 13px;
         }
         button {
             background: #0284c7;
             color: white;
             border: none;
-            padding: 12px 20px;
-            font-size: 16px;
+            padding: 0 20px;
+            font-size: 14px;
             font-weight: 600;
             border-radius: 6px;
             cursor: pointer;
-            width: 100%;
             transition: background 0.2s;
         }
         button:hover {
             background: #0ea5e9;
         }
-        .preset-btn {
-            background: #334155;
-            margin-bottom: 15px;
-            font-size: 13px;
-            padding: 8px;
-        }
-        .preset-btn:hover {
+        button:disabled {
             background: #475569;
-        }
-        #status {
-            margin-top: 15px;
-            font-size: 14px;
-            word-break: break-all;
+            cursor: not-allowed;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>AppForge AI Compiler Hub</h1>
-    <p>Push cross-platform compilation workflows (.exe for Microsoft Store, .apk, and .ipa) directly to your GitHub repository.</p>
+    <h1>AppForge AI Chat Assistant</h1>
+    <p>Tell the AI what you want to build (e.g., "Make an unsigned IPA for my app" or "Build an EXE for the Microsoft Store"). It will auto-generate the appropriate build workflow and push it directly to your GitHub repo.</p>
 
-    <button type="button" class="preset-btn" onclick="loadCrossPlatformWorkflow()">Load Complete Multi-Platform Build Workflow</button>
+    <div id="chatBox">
+        <div class="message ai-msg">Hello! I'm your AppForge AI builder bot linked directly to Tvman4/appforge-ai. Tell me what target format you want (.exe, unsigned .ipa, or .apk) and I'll generate and push the workflow for you!</div>
+    </div>
 
-    <form id="deployForm">
-        <label for="repoOwner">Repository Owner</label>
-        <input type="text" id="repoOwner" value="Tvman4" required>
-
-        <label for="repoName">Repository Name</label>
-        <input type="text" id="repoName" value="appforge-ai" required>
-
-        <label for="filePath">Repository File Path</label>
-        <input type="text" id="filePath" value=".github/workflows/build.yml" required>
-
-        <label for="fileContent">Workflow Code Content (.yml)</label>
-        <textarea id="fileContent" required></textarea>
-
-        <button type="submit" id="submitBtn">Deploy Workflow to GitHub</button>
+    <form id="chatForm" class="input-area">
+        <input type="text" id="userInput" placeholder="Type what you want to build..." autocomplete="off" required>
+        <button type="submit" id="sendBtn">Send</button>
     </form>
-
-    <div id="status"></div>
 </div>
 
 <script>
-    function loadCrossPlatformWorkflow() {
-        const workflowYaml = `name: Build All Platforms (EXE, APK, IPA)
+    const chatBox = document.getElementById('chatBox');
+    const chatForm = document.getElementById('chatForm');
+    const userInput = document.getElementById('userInput');
+    const sendBtn = document.getElementById('sendBtn');
 
-on:
-  push:
-    branches: [ main ]
-
-jobs:
-  build-windows-exe:
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Build Windows Executable (.exe for Microsoft Store)
-        run: |
-          npm install
-          npx pkg . --output appforge-windows.exe
-      - name: Upload EXE Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: microsoft-store-exe
-          path: appforge-windows.exe
-
-  build-android-apk:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Set up JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-      - name: Build Android APK
-        run: |
-          echo "Building Android APK..."
-          # Add Gradle or build automation commands here
-
-  build-ios-ipa:
-    runs-on: macos-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Build iOS IPA
-        run: |
-          echo "Building iOS IPA..."
-          # Add Xcode compilation hooks here
-`;
-        document.getElementById('fileContent').value = workflowYaml.trim();
-        document.getElementById('filePath').value = '.github/workflows/build.yml';
+    function appendMessage(text, sender) {
+        const msgDiv = document.createElement('div');
+        msgDiv.className = `message ${sender === 'user' ? 'user-msg' : 'ai-msg'}`;
+        msgDiv.textContent = text;
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    // Load default template on start
-    loadCrossPlatformWorkflow();
-
-    document.getElementById('deployForm').addEventListener('submit', async (e) => {
+    chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        
-        const owner = document.getElementById('repoOwner').value;
-        const repo = document.getElementById('repoName').value;
-        const path = document.getElementById('filePath').value;
-        const content = document.getElementById('fileContent').value;
-        const statusDiv = document.getElementById('status');
-        const submitBtn = document.getElementById('submitBtn');
+        const text = userInput.value.trim();
+        if (!text) return;
 
-        statusDiv.style.color = "#38bdf8";
-        statusDiv.innerText = "Deploying code via GitHub Bot backend...";
-        submitBtn.disabled = true;
+        appendMessage(text, 'user');
+        userInput.value = '';
+        userInput.disabled = true;
+        sendBtn.disabled = true;
+
+        appendMessage("Analyzing request, generating workflow, and pushing to GitHub...", 'ai');
+
+        let targetYml = '';
+        let targetPath = '.github/workflows/build.yml';
+        const lower = text.toLowerCase();
+
+        if (lower.includes('ipa') || lower.includes('ios')) {
+            targetYml = `name: Build Unsigned iOS IPA\non:\n  push:\n    branches: [ main ]\njobs:\n  build-ipa:\n    runs-on: macos-latest\n    steps:\n      - uses: actions/checkout@v4\n      - name: Set up Node.js\n        uses: actions/setup-node@v4\n        with:\n          node-version: 20\n      - name: Build Unsigned IPA\n        run: |\n          npm install\n          mkdir -p Payload\n          if [ -d "public" ]; then cp -r public Payload/AppForge.app; else mkdir -p Payload/AppForge.app; fi\n          zip -r appforge-unsigned.ipa Payload\n      - name: Upload Unsigned IPA\n        uses: actions/upload-artifact@v4\n        with:\n          name: unsigned-ios-ipa\n          path: appforge-unsigned.ipa`;
+        } else if (lower.includes('apk') || lower.includes('android')) {
+            targetYml = `name: Build Android APK\non:\n  push:\n    branches: [ main ]\njobs:\n  build-apk:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - name: Set up JDK 17\n        uses: actions/setup-java@v4\n        with:\n          distribution: 'temurin'\n          java-version: '17'\n      - name: Build APK\n        run: |\n          echo "Building Android APK..."\n      - name: Upload APK\n        uses: actions/upload-artifact@v4\n        with:\n          name: android-apk\n          path: '**/*.apk'`;
+        } else {
+            targetYml = `name: Build Microsoft Store EXE\non:\n  push:\n    branches: [ main ]\njobs:\n  build-exe:\n    runs-on: windows-latest\n    steps:\n      - uses: actions/checkout@v4\n      - name: Set up Node.js\n        uses: actions/setup-node@v4\n        with:\n          node-version: 20\n      - name: Package EXE via pkg\n        run: |\n          npm install\n          npx pkg . --output appforge-store.exe\n      - name: Upload EXE\n        uses: actions/upload-artifact@v4\n        with:\n          name: microsoft-store-exe\n          path: appforge-store.exe`;
+        }
 
         try {
             const response = await fetch('/api/deploy', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ owner, repo, path, content })
+                body: JSON.stringify({
+                    owner: 'Tvman4',
+                    repo: 'appforge-ai',
+                    path: targetPath,
+                    content: targetYml
+                })
             });
 
             const result = await response.json();
-
             if (result.success) {
-                statusDiv.style.color = "#4ade80";
-                statusDiv.innerHTML = `Success! File pushed: <a href="${result.url}" target="_blank" style="color: #38bdf8;">${result.url}</a>`;
+                appendMessage(`Success! Generated workflow and pushed to GitHub:\n${result.url}\n\nWorkflow Code Pushed:\n${targetYml}`, 'ai');
             } else {
-                statusDiv.style.color = "#f87171";
-                statusDiv.innerText = `Error: ${result.error}`;
+                appendMessage(`Error from GitHub App: ${result.error}`, 'ai');
             }
         } catch (err) {
-            statusDiv.style.color = "#f87171";
-            statusDiv.innerText = `Network Error: ${err.message}`;
+            appendMessage(`Network Error: ${err.message}`, 'ai');
         } finally {
-            submitBtn.disabled = false;
+            userInput.disabled = false;
+            sendBtn.disabled = false;
+            userInput.focus();
         }
     });
 </script>

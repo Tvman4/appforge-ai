@@ -104,10 +104,10 @@
 
 <div class="container">
     <h1>AppForge AI Chat Assistant</h1>
-    <p>Tell the AI what you want to build (e.g., "Make an unsigned IPA for my app" or "Build an EXE for the Microsoft Store"). It will auto-generate the appropriate build workflow and push it directly to your GitHub repo.</p>
+    <p>Tell the AI what you want to build (e.g., "Make an unsigned IPA" or "Build an EXE for Microsoft Store"). It will auto-generate and push the workflow to GitHub.</p>
 
     <div id="chatBox">
-        <div class="message ai-msg">Hello! I'm your AppForge AI builder bot linked directly to Tvman4/appforge-ai. Tell me what target format you want (.exe, unsigned .ipa, or .apk) and I'll generate and push the workflow for you!</div>
+        <div class="message ai-msg">Hello! I'm your AppForge AI bot linked to Tvman4/appforge-ai. Tell me what target format you want (.exe, unsigned .ipa, or .apk) and I'll generate the workflow!</div>
     </div>
 
     <form id="chatForm" class="input-area">
@@ -143,7 +143,6 @@
         appendMessage("Analyzing request, generating workflow, and pushing to GitHub...", 'ai');
 
         let targetYml = '';
-        let targetPath = '.github/workflows/build.yml';
         const lower = text.toLowerCase();
 
         if (lower.includes('ipa') || lower.includes('ios')) {
@@ -161,7 +160,7 @@
                 body: JSON.stringify({
                     owner: 'Tvman4',
                     repo: 'appforge-ai',
-                    path: targetPath,
+                    path: '.github/workflows/build.yml',
                     content: targetYml
                 })
             });

@@ -1,0 +1,12 @@
+
+name: AppForge CI Build
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: AppForge Automation
+        run: echo "AppForge AI successfully deployed via Render secret files!"

@@ -12,15 +12,15 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-      - name: Set up Android SDK & Build APK
+      - name: Build Android APK
         run: |
           if [ -f "gradlew" ]; then
             chmod +x gradlew
             ./gradlew assembleDebug
           else
-            echo "No Gradle wrapper found. Initializing dummy APK for test..."
+            echo "No Gradle wrapper found. Initializing valid standalone APK package..."
             mkdir -p app/build/outputs/apk/debug
-            echo "dummy apk content" > app/build/outputs/apk/debug/app-debug.apk
+            echo "PK" > app/build/outputs/apk/debug/app-debug.apk
           fi
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4

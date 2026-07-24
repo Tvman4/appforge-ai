@@ -16,18 +16,18 @@ jobs:
           npm install
           mkdir -p Payload/AppForge.app
           
-          # Create a valid minimal Info.plist required by iOS parsers
+          # Create a valid minimal Info.plist required by iOS parsers with custom bundle ID and name
           cat << 'EOF' > Payload/AppForge.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0">
           <dict>
               <key>CFBundleIdentifier</key>
-              <string>com.appforge.ai</string>
+              <string>com.tvman.appforge</string>
               <key>CFBundleName</key>
               <string>AppForge</string>
               <key>CFBundleDisplayName</key>
-              <string>AppForge AI</string>
+              <string>AppForge</string>
               <key>CFBundleExecutable</key>
               <string>AppForge</string>
               <key>CFBundleVersion</key>
@@ -36,7 +36,6 @@ jobs:
               <string>1.0</string>
               <key>CFBundlePackageType</key>
               <string>APPL</string>
-          </dict>
           </dict>
           </plist>
           EOF

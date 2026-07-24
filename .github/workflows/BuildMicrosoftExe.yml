@@ -10,24 +10,20 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - name: Ensure package.json has a bin entry or build entry
+          node-version: 18
+      - name: Ensure package.json has a valid main/bin entry
         run: |
           node -e "
           const fs = require('fs');
           const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
-          if (!pkg.bin && !pkg.main) {
-            pkg.main = 'index.js';
-          }
-          if (!pkg.bin) {
-            pkg.bin = pkg.main || 'index.js';
-          }
+          if (!pkg.main) pkg.main = 'index.js';
+          if (!pkg.bin) pkg.bin = pkg.main;
           fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
           "
       - name: Package Microsoft Store EXE
         run: |
           npm install
-          npx pkg . --output appforge-microsoft-store.exe
+          npx pkg . --targets node18-win-x64 --output appforge-microsoft-store.exe
       - name: Upload Microsoft Store EXE Artifact
         uses: actions/upload-artifact@v4
         with:

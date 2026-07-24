@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AppForge AI - Intelligent Compiler Chat</title>
+    <title>AppForge AI</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -16,14 +16,14 @@
         }
         .container {
             width: 100%;
-            max-width: 700px;
+            max-width: 750px;
             background: #1e293b;
             padding: 25px;
             border-radius: 12px;
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
             display: flex;
             flex-direction: column;
-            height: 85vh;
+            height: 88vh;
         }
         h1 {
             font-size: 22px;
@@ -34,6 +34,22 @@
             color: #94a3b8;
             font-size: 13px;
             margin-bottom: 15px;
+        }
+        .config-box {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 13px;
+            box-sizing: border-box;
         }
         #chatBox {
             flex: 1;
@@ -51,7 +67,7 @@
             padding: 10px 14px;
             border-radius: 8px;
             font-size: 14px;
-            max-width: 85%;
+            max-width: 88%;
             line-height: 1.4;
         }
         .user-msg {
@@ -70,15 +86,6 @@
         .input-area {
             display: flex;
             gap: 10px;
-        }
-        input {
-            flex: 1;
-            padding: 12px;
-            background: #0f172a;
-            border: 1px solid #334155;
-            border-radius: 6px;
-            color: #fff;
-            font-size: 14px;
         }
         button {
             background: #0284c7;
@@ -103,15 +110,20 @@
 <body>
 
 <div class="container">
-    <h1>AppForge AI Chat Assistant</h1>
-    <p>Tell the AI what you want to build (e.g., "Make an unsigned IPA" or "Build an EXE for Microsoft Store"). It will auto-generate and push the workflow to GitHub.</p>
+    <h1>AppForge AI</h1>
+    <p>Link any target repository, chat with the AI to describe your custom workflow or compilation steps, and deploy automatically.</p>
+
+    <div class="config-box">
+        <input type="text" id="repoOwner" placeholder="Target GitHub Owner (e.g., Tvman4)" required>
+        <input type="text" id="repoName" placeholder="Target Repo Name (e.g., appforge-ai)" required>
+    </div>
 
     <div id="chatBox">
-        <div class="message ai-msg">Hello! I'm your AppForge AI bot linked to Tvman4/appforge-ai. Tell me what target format you want (.exe, unsigned .ipa, or .apk) and I'll generate the workflow!</div>
+        <div class="message ai-msg">Hello! Enter the owner and repository above, then tell me what code or custom workflow you want to generate and push.</div>
     </div>
 
     <form id="chatForm" class="input-area">
-        <input type="text" id="userInput" placeholder="Type what you want to build..." autocomplete="off" required>
+        <input type="text" id="userInput" placeholder="Describe what you want to build or automate..." autocomplete="off" required>
         <button type="submit" id="sendBtn">Send</button>
     </form>
 </div>
@@ -121,6 +133,8 @@
     const chatForm = document.getElementById('chatForm');
     const userInput = document.getElementById('userInput');
     const sendBtn = document.getElementById('sendBtn');
+    const repoOwnerInput = document.getElementById('repoOwner');
+    const repoNameInput = document.getElementById('repoName');
 
     function appendMessage(text, sender) {
         const msgDiv = document.createElement('div');
@@ -132,44 +146,39 @@
 
     chatForm.addEventListener('submit', async (e) => {
         e.preventDefault();
-        const text = userInput.value.trim();
-        if (!text) return;
+        const promptText = userInput.value.trim();
+        const owner = repoOwnerInput.value.trim();
+        const repo = repoNameInput.value.trim();
 
-        appendMessage(text, 'user');
+        if (!promptText || !owner || !repo) {
+            alert("Please fill in the target Repository Owner, Repository Name, and your message prompt.");
+            return;
+        }
+
+        appendMessage(promptText, 'user');
         userInput.value = '';
         userInput.disabled = true;
         sendBtn.disabled = true;
 
-        appendMessage("Analyzing request, generating workflow, and pushing to GitHub...", 'ai');
-
-        let targetYml = '';
-        const lower = text.toLowerCase();
-
-        if (lower.includes('ipa') || lower.includes('ios')) {
-            targetYml = `name: Build Unsigned iOS IPA\non:\n  push:\n    branches: [ main ]\njobs:\n  build-ipa:\n    runs-on: macos-latest\n    steps:\n      - uses: actions/checkout@v4\n      - name: Set up Node.js\n        uses: actions/setup-node@v4\n        with:\n          node-version: 20\n      - name: Build Unsigned IPA\n        run: |\n          npm install\n          mkdir -p Payload\n          if [ -d "public" ]; then cp -r public Payload/AppForge.app; else mkdir -p Payload/AppForge.app; fi\n          zip -r appforge-unsigned.ipa Payload\n      - name: Upload Unsigned IPA\n        uses: actions/upload-artifact@v4\n        with:\n          name: unsigned-ios-ipa\n          path: appforge-unsigned.ipa`;
-        } else if (lower.includes('apk') || lower.includes('android')) {
-            targetYml = `name: Build Android APK\non:\n  push:\n    branches: [ main ]\njobs:\n  build-apk:\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - name: Set up JDK 17\n        uses: actions/setup-java@v4\n        with:\n          distribution: 'temurin'\n          java-version: '17'\n      - name: Build APK\n        run: |\n          echo "Building Android APK..."\n      - name: Upload APK\n        uses: actions/upload-artifact@v4\n        with:\n          name: android-apk\n          path: '**/*.apk'`;
-        } else {
-            targetYml = `name: Build Microsoft Store EXE\non:\n  push:\n    branches: [ main ]\njobs:\n  build-exe:\n    runs-on: windows-latest\n    steps:\n      - uses: actions/checkout@v4\n      - name: Set up Node.js\n        uses: actions/setup-node@v4\n        with:\n          node-version: 20\n      - name: Package EXE via pkg\n        run: |\n          npm install\n          npx pkg . --output appforge-store.exe\n      - name: Upload EXE\n        uses: actions/upload-artifact@v4\n        with:\n          name: microsoft-store-exe\n          path: appforge-store.exe`;
-        }
+        appendMessage("AI is dynamically writing your custom workflow code and pushing via GitHub App...", 'ai');
 
         try {
             const response = await fetch('/api/deploy', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    owner: 'Tvman4',
-                    repo: 'appforge-ai',
-                    path: '.github/workflows/build.yml',
-                    content: targetYml
+                    owner,
+                    repo,
+                    prompt: promptText,
+                    filePath: ".github/workflows/build.yml"
                 })
             });
 
             const result = await response.json();
             if (result.success) {
-                appendMessage(`Success! Generated workflow and pushed to GitHub:\n${result.url}\n\nWorkflow Code Pushed:\n${targetYml}`, 'ai');
+                appendMessage(`Success! Deployed to GitHub:\n${result.url}\n\n--- Generated Code ---\n${result.generatedCode}`, 'ai');
             } else {
-                appendMessage(`Error from GitHub App: ${result.error}`, 'ai');
+                appendMessage(`Error: ${result.error}`, 'ai');
             }
         } catch (err) {
             appendMessage(`Network Error: ${err.message}`, 'ai');

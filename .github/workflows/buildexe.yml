@@ -10,11 +10,20 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 18
+      - name: Ensure package.json has a valid main/bin entry
+        run: |
+          node -e "
+          const fs = require('fs');
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          if (!pkg.main) pkg.main = 'appforge.js';
+          if (!pkg.bin) pkg.bin = pkg.main;
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+          "
       - name: Package Standard EXE
         run: |
           npm install
-          npx pkg . --output appforge-standard.exe
+          npx pkg . --targets node18-win-x64 --output appforge-standard.exe
       - name: Upload Standard EXE Artifact
         uses: actions/upload-artifact@v4
         with:

@@ -11,12 +11,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
-      - name: Build Valid Unsigned IPA with Info.plist
+      - name: Build Valid Unsigned IPA for Sideloading
         run: |
           npm install
           mkdir -p Payload/AppForge.app
           
-          # Create a valid minimal Info.plist required by iOS parsers with custom bundle ID and name
+          # Create an optimized Info.plist compatible with iOS installation signers (like Ksign)
           cat << 'EOF' > Payload/AppForge.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -31,21 +31,31 @@ jobs:
               <key>CFBundleExecutable</key>
               <string>AppForge</string>
               <key>CFBundleVersion</key>
-              <string>1.0</string>
+              <string>1.0.0</string>
               <key>CFBundleShortVersionString</key>
-              <string>1.0</string>
+              <string>1.0.0</string>
               <key>CFBundlePackageType</key>
               <string>APPL</string>
+              <key>MinimumOSVersion</key>
+              <string>12.0</string>
+              <key>UIDeviceFamily</key>
+              <array>
+                  <integer>1</integer>
+                  <integer>2</integer>
+              </array>
           </dict>
           </plist>
           EOF
 
-          # Create a dummy executable binary so it's a complete app structure
-          touch Payload/AppForge.app/AppForge
+          # Create dummy script execution binary with proper permissions
+          echo '#!/bin/sh' > Payload/AppForge.app/AppForge
+          echo 'echo "AppForge Running"' >> Payload/AppForge.app/AppForge
           chmod +x Payload/AppForge.app/AppForge
 
-          # Zip properly maintaining the Payload structure at the root
-          zip -r appforge-unsigned.ipa Payload
+          # Package cleanly into .ipa without extra parent folders
+          cd Payload
+          zip -r ../appforge-unsigned.ipa .
+          cd ..
       - name: Upload Unsigned IPA Artifact
         uses: actions/upload-artifact@v4
         with:

@@ -1,0 +1,36 @@
+name: Build Microsoft Store MSIX
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build-msix:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+      - name: Ensure package.json has a valid main/bin entry
+        run: |
+          node -e "
+          const fs = require('fs');
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          if (!pkg.main) pkg.main = 'appforge.js';
+          if (!pkg.bin) pkg.bin = pkg.main;
+          fs.writeFileSync('package.json', JSON.stringify(pkg, null, 2));
+          "
+      - name: Package MSIX for Microsoft Store
+        run: |
+          npm install
+          npx pkg . --targets node18-win-x64 --output appforge-microsoft-store.exe
+          mkdir -p msix-package
+          cp appforge-microsoft-store.exe msix-package/
+          echo '<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"><Identity Name="AppForge.App" Publisher="CN=AppForge" Version="1.0.0.0" ProcessorArchitecture="x64" /><Properties><DisplayName>AppForge AI</DisplayName><PublisherDisplayName>AppForge</PublisherDisplayName><Logo>Logo.png</Logo></Properties><Dependencies><TargetDeviceFamily Name="Windows.Universal" MinVersion="10.0.19041.0" MaxVersionTested="10.0.19041.0" /></Dependencies><Resources><Resource Language="en-us" /></Resources><Applications><Application Id="App" Executable="appforge-microsoft-store.exe" EntryPoint="Windows.FullTrustApplication"><VisualElements DisplayName="AppForge AI" Description="AppForge AI Desktop Application" BackgroundColor="transparent" Square150x150Logo="Logo.png" Square44x44Logo="Logo.png"><DefaultTile Logo="Logo.png" /></VisualElements></Application></Applications></Package>' > msix-package/AppXManifest.xml
+          echo "dummy logo" > msix-package/Logo.png
+          Compress-Archive -Path msix-package\* -DestinationPath appforge-microsoft-store.msix -Force
+      - name: Upload MSIX Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: microsoft-store-msix
+          path: appforge-microsoft-store.msix

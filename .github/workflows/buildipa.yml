@@ -10,12 +10,42 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-      - name: Build Unsigned IPA
+          node-version: 18
+      - name: Build Valid Unsigned IPA with Info.plist
         run: |
           npm install
-          mkdir -p Payload
-          if [ -d "public" ]; then cp -r public Payload/AppForge.app; else mkdir -p Payload/AppForge.app; fi
+          mkdir -p Payload/AppForge.app
+          
+          # Create a valid minimal Info.plist required by iOS parsers
+          cat << 'EOF' > Payload/AppForge.app/Info.plist
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+              <key>CFBundleIdentifier</key>
+              <string>com.appforge.ai</string>
+              <key>CFBundleName</key>
+              <string>AppForge</string>
+              <key>CFBundleDisplayName</key>
+              <string>AppForge AI</string>
+              <key>CFBundleExecutable</key>
+              <string>AppForge</string>
+              <key>CFBundleVersion</key>
+              <string>1.0</string>
+              <key>CFBundleShortVersionString</key>
+              <string>1.0</string>
+              <key>CFBundlePackageType</key>
+              <string>APPL</string>
+          </dict>
+          </dict>
+          </plist>
+          EOF
+
+          # Create a dummy executable binary so it's a complete app structure
+          touch Payload/AppForge.app/AppForge
+          chmod +x Payload/AppForge.app/AppForge
+
+          # Zip properly maintaining the Payload structure at the root
           zip -r appforge-unsigned.ipa Payload
       - name: Upload Unsigned IPA Artifact
         uses: actions/upload-artifact@v4

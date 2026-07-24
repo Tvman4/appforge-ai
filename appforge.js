@@ -1,9 +1,12 @@
 import { App } from "octokit";
+import fs from "fs";
 
-// Securely read credentials from Render environment variables
+// Render mounts secret files to /etc/secrets/private-key.pem
+const privateKeyPath = process.env.RENDER ? "/etc/secrets/private-key.pem" : "./private-key.pem";
+
 const app = new App({
   appId: process.env.APP_ID,
-  privateKey: process.env.PRIVATE_KEY.replace(/\\n/g, '\n'),
+  privateKey: fs.readFileSync(privateKeyPath, "utf8"),
 });
 
 async function run() {
@@ -25,14 +28,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: AppForge Automation
-        run: echo "AppForge AI successfully generated and pushed this workflow file via Render!"
+        run: echo "AppForge AI successfully deployed via Render secret files!"
 `;
 
     const response = await octokit.rest.repos.createOrUpdateFileContents({
       owner: owner,
       repo: repo,
       path: path,
-      message: "feat: Add build.yml automatically via AppForge AI GitHub App",
+      message: "feat: Add build.yml via AppForge AI GitHub App",
       content: Buffer.from(buildYmlContent).toString("base64"),
     });
 

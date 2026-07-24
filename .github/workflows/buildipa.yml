@@ -11,12 +11,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 18
-      - name: Build Valid Unsigned IPA for Sideloading
+      - name: Build Valid Unsigned IPA Package Structure
         run: |
           npm install
           mkdir -p Payload/AppForge.app
           
-          # Create an optimized Info.plist compatible with iOS installation signers (like Ksign)
+          # Create strict Info.plist format
           cat << 'EOF' > Payload/AppForge.app/Info.plist
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -47,17 +47,16 @@ jobs:
           </plist>
           EOF
 
-          # Create dummy script execution binary with proper permissions
+          # Create placeholder executable binary
           echo '#!/bin/sh' > Payload/AppForge.app/AppForge
-          echo 'echo "AppForge Running"' >> Payload/AppForge.app/AppForge
           chmod +x Payload/AppForge.app/AppForge
 
-          # Package cleanly into .ipa without extra parent folders
-          cd Payload
-          zip -r ../appforge-unsigned.ipa .
-          cd ..
+          # Create archive using standard system zip cleanly avoiding hidden files that break extraction tools
+          find Payload -name ".DS_Store" -delete
+          zip -r appforge-unsigned.ipa Payload
       - name: Upload Unsigned IPA Artifact
         uses: actions/upload-artifact@v4
         with:
           name: unsigned-ios-ipa
           path: appforge-unsigned.ipa
+

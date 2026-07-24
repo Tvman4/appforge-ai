@@ -1,0 +1,13 @@
+{
+  "name": "appforge-ai",
+  "version": "1.0.0",
+  "description": "AppForge AI backend automation",
+  "main": "appforge.js",
+  "type": "module",
+  "scripts": {
+    "start": "node appforge.js"
+  },
+  "dependencies": {
+    "octokit": "^4.1.2"
+  }
+}

@@ -16,8 +16,6 @@ const app = new App({
 
 const server = express();
 server.use(express.json());
-
-// Serve static HTML page if you place index.html in a 'public' folder or root
 server.use(express.static(__dirname));
 
 server.post("/api/deploy", async (req, res) => {
@@ -30,14 +28,14 @@ server.post("/api/deploy", async (req, res) => {
       const existingFile = await octokit.rest.repos.getContent({ owner, repo, path: filePath });
       sha = existingFile.data.sha;
     } catch (e) {
-      // File doesn't exist yet, which is completely fine
+      // File doesn't exist yet, which is fine
     }
 
     const response = await octokit.rest.repos.createOrUpdateFileContents({
       owner,
       repo,
       path: filePath,
-      message: "feat: Automated multi-platform build workflow via AppForge AI Hub",
+      message: "feat: Chat-driven workflow generation via AppForge AI",
       content: Buffer.from(content).toString("base64"),
       sha,
     });

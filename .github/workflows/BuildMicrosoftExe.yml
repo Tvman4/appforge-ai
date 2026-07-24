@@ -11,12 +11,12 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Package EXE via pkg
+      - name: Package Microsoft Store EXE
         run: |
           npm install
-          npx pkg . --output appforge-store.exe
-      - name: Upload EXE
+          npx pkg . --output appforge-microsoft-store.exe
+      - name: Upload Microsoft Store EXE Artifact
         uses: actions/upload-artifact@v4
         with:
           name: microsoft-store-exe
-          path: appforge-store.exe
+          path: appforge-microsoft-store.exe

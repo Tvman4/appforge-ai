@@ -1,5 +1,11 @@
 import { App } from "octokit";
 import fs from "fs";
+import express from "express";
+import path from "path";
+import { fileURLToPath } from "url";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const privateKeyPath = process.env.RENDER ? "/etc/secrets/appforge-ai-official.2026-07-24.private-key.pem" : "./private-key.pem";
 
@@ -8,54 +14,42 @@ const app = new App({
   privateKey: fs.readFileSync(privateKeyPath, "utf8"),
 });
 
-async function run() {
+const server = express();
+server.use(express.json());
+
+// Serve static HTML page if you place index.html in a 'public' folder or root
+server.use(express.static(__dirname));
+
+server.post("/api/deploy", async (req, res) => {
   try {
+    const { owner, repo, path: filePath, content } = req.body;
     const octokit = await app.getInstallationOctokit(process.env.INSTALLATION_ID);
 
-    const owner = "Tvman4";
-    const repo = "appforge-ai";
-    const path = ".github/workflows/build.yml";
-
-    const buildYmlContent = `
-name: AppForge CI Build
-on:
-  push:
-    branches: [ main ]
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: AppForge Automation
-        run: echo "AppForge AI successfully deployed via Render secret files!"
-`;
-
-    // Check if file already exists to grab its sha
     let sha;
     try {
-      const existingFile = await octokit.rest.repos.getContent({
-        owner,
-        repo,
-        path,
-      });
+      const existingFile = await octokit.rest.repos.getContent({ owner, repo, path: filePath });
       sha = existingFile.data.sha;
     } catch (e) {
-      // File doesn't exist yet, which is fine
+      // File doesn't exist yet, which is completely fine
     }
 
     const response = await octokit.rest.repos.createOrUpdateFileContents({
-      owner: owner,
-      repo: repo,
-      path: path,
-      message: "feat: Add or update build.yml via AppForge AI GitHub App",
-      content: Buffer.from(buildYmlContent).toString("base64"),
-      sha: sha, // Includes sha if updating an existing file
+      owner,
+      repo,
+      path: filePath,
+      message: "feat: Automated multi-platform build workflow via AppForge AI Hub",
+      content: Buffer.from(content).toString("base64"),
+      sha,
     });
 
-    console.log(`Success! File created/updated: ${response.data.commit.html_url}`);
+    res.json({ success: true, url: response.data.commit.html_url });
   } catch (error) {
     console.error("Error pushing file via GitHub App:", error);
+    res.status(500).json({ success: false, error: error.message });
   }
-}
+});
 
-run();
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`AppForge AI backend running on port ${PORT}`);
+});

@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AppForge AI - Multi-Platform Compiler Hub</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background: #1e293b;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #38bdf8;
+        }
+        p {
+            color: #94a3b8;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px 12px;
+            margin-bottom: 20px;
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 6px;
+            color: #fff;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        textarea {
+            resize: vertical;
+            height: 220px;
+            font-family: monospace;
+            font-size: 13px;
+        }
+        button {
+            background: #0284c7;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #0ea5e9;
+        }
+        .preset-btn {
+            background: #334155;
+            margin-bottom: 15px;
+            font-size: 13px;
+            padding: 8px;
+        }
+        .preset-btn:hover {
+            background: #475569;
+        }
+        #status {
+            margin-top: 15px;
+            font-size: 14px;
+            word-break: break-all;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>AppForge AI Compiler Hub</h1>
+    <p>Push cross-platform compilation workflows (.exe for Microsoft Store, .apk, and .ipa) directly to your GitHub repository.</p>
+
+    <button type="button" class="preset-btn" onclick="loadCrossPlatformWorkflow()">Load Complete Multi-Platform Build Workflow</button>
+
+    <form id="deployForm">
+        <label for="repoOwner">Repository Owner</label>
+        <input type="text" id="repoOwner" value="Tvman4" required>
+
+        <label for="repoName">Repository Name</label>
+        <input type="text" id="repoName" value="appforge-ai" required>
+
+        <label for="filePath">Repository File Path</label>
+        <input type="text" id="filePath" value=".github/workflows/build.yml" required>
+
+        <label for="fileContent">Workflow Code Content (.yml)</label>
+        <textarea id="fileContent" required></textarea>
+
+        <button type="submit" id="submitBtn">Deploy Workflow to GitHub</button>
+    </form>
+
+    <div id="status"></div>
+</div>
+
+<script>
+    function loadCrossPlatformWorkflow() {
+        const workflowYaml = `name: Build All Platforms (EXE, APK, IPA)
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-windows-exe:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build Windows Executable (.exe for Microsoft Store)
+        run: |
+          npm install
+          npx pkg . --output appforge-windows.exe
+      - name: Upload EXE Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: microsoft-store-exe
+          path: appforge-windows.exe
+
+  build-android-apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+      - name: Build Android APK
+        run: |
+          echo "Building Android APK..."
+          # Add Gradle or build automation commands here
+
+  build-ios-ipa:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build iOS IPA
+        run: |
+          echo "Building iOS IPA..."
+          # Add Xcode compilation hooks here
+`;
+        document.getElementById('fileContent').value = workflowYaml.trim();
+        document.getElementById('filePath').value = '.github/workflows/build.yml';
+    }
+
+    // Load default template on start
+    loadCrossPlatformWorkflow();
+
+    document.getElementById('deployForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const owner = document.getElementById('repoOwner').value;
+        const repo = document.getElementById('repoName').value;
+        const path = document.getElementById('filePath').value;
+        const content = document.getElementById('fileContent').value;
+        const statusDiv = document.getElementById('status');
+        const submitBtn = document.getElementById('submitBtn');
+
+        statusDiv.style.color = "#38bdf8";
+        statusDiv.innerText = "Deploying code via GitHub Bot backend...";
+        submitBtn.disabled = true;
+
+        try {
+            const response = await fetch('/api/deploy', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ owner, repo, path, content })
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                statusDiv.style.color = "#4ade80";
+                statusDiv.innerHTML = `Success! File pushed: <a href="${result.url}" target="_blank" style="color: #38bdf8;">${result.url}</a>`;
+            } else {
+                statusDiv.style.color = "#f87171";
+                statusDiv.innerText = `Error: ${result.error}`;
+            }
+        } catch (err) {
+            statusDiv.style.color = "#f87171";
+            statusDiv.innerText = `Network Error: ${err.message}`;
+        } finally {
+            submitBtn.disabled = false;
+        }
+    });
+</script>
+
+</body>
+</html>
